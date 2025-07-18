@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     pulls = fetch_pull_requests_since_last_release()
     print(f"Found {len(pulls)} merged PRs since last release")
-    assigned, pr_module = assign_prs(pulls, categories)
+    assigned, _ = assign_prs(pulls, categories)
     render_changelog(pulls, assigned)
     print()
     render_contributors(pulls)
