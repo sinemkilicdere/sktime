@@ -112,7 +112,7 @@ def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):
         return response.json()
     else:
         raise ValueError(response.text, response.status_code)
-    
+
 
 def render_contributors(prs: list, fmt: str = "rst"):
     """Find unique authors and print a list in  given format."""
@@ -137,10 +137,8 @@ def assign_prs(prs, categs: list[dict[str, list[str]]]):
         pr_labels = [label["name"] for label in pr["labels"]]
 
         for cat in categs:
-            
             if not set(cat["labels"]).isdisjoint(set(pr_labels)):
                 assigned[cat["title"]].append(i)
-        
         for label in pr_labels:
             if label.startswith("module:"):
                 pr_module[i] = label.replace("module:", "")
@@ -148,10 +146,10 @@ def assign_prs(prs, categs: list[dict[str, list[str]]]):
     #             if any(l.startswith("module") for l in pr_labels):
     #                 print(i, pr_labels)
 
-    #if no match with any category
-    assigned["Other"] = list(
-        set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
-    )
+    # if no match with any category
+    # assigned["Other"] = list(
+    #    set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
+    # )
 
     return assigned, pr_module
 
@@ -167,40 +165,47 @@ def render_row(pr):
 
 
 def render_changelog(prs, assigned):
+    """Render and print the changelog grouped by category and module."""
     # sourcery skip: use-named-expression
     LABEL_TO_SUBSECTION = {
-    "module:forecasting": "Forecasting",
-    "module:classification": "Time Series Classification",
-    "module:regression": "Regression",
-    "module:transformations": "Transformations",
-    "module:datatypes": "Datatypes",
-    "module:alignment": "Alignment",
-    "module:annotation": "Annotation",
-    "module:dataprocessing": "Data Processing",
-    "module:proba": "Probability Estimation",
+        "module:forecasting": "Forecasting",
+        "module:classification": "Time Series Classification",
+        "module:regression": "Regression",
+        "module:transformations": "Transformations",
+        "module:datatypes": "Datatypes",
+        "module:alignment": "Alignment",
+        "module:annotation": "Annotation",
+        "module:dataprocessing": "Data Processing",
+        "module:proba": "Probability Estimation",
+        "module:clustering": "Clustering",
+        "module:plotting&utilities": "Plotting & Utilities",
+        "module:base-framework": "Base Framework",
     }
     # more can be added also
-    #labels start with module
-    #Subkection title comes after label
-    
+    # labels start with module
+    # Subsection title comes after label
+
     """Render changelog."""
     from dateutil import parser
 
     for title, _ in assigned.items():
         pr_group = [prs[i] for i in assigned[title]]
         if pr_group:
-            print(f"\n{title}")
-            print("~" * len(title), end="\n\n")
-
+            print()
+            print(title)
+            print("~" * len(title))
+            print()
 
         # Group PRs by module labels
-        subsection_map = defaultdict(list) # Creates dictionry where key is the subsection title
+        subsection_map = defaultdict(list)
         for pr in pr_group:
             labels = [label["name"] for label in pr["labels"]]
             added = False
-            
+
             for label in labels:
+                # print("hello",label)
                 if label in LABEL_TO_SUBSECTION:
+                    #   print("hello")
                     subsection_map[LABEL_TO_SUBSECTION[label]].append(pr)
                     added = True
             if not added:
@@ -226,7 +231,7 @@ if __name__ == "__main__":
 
     pulls = fetch_pull_requests_since_last_release()
     print(f"Found {len(pulls)} merged PRs since last release")
-    assigned, _ = assign_prs(pulls, categories)
+    assigned, pr_module = assign_prs(pulls, categories)
     render_changelog(pulls, assigned)
     print()
     render_contributors(pulls)
