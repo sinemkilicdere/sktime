@@ -188,36 +188,43 @@ def render_changelog(prs, assigned):
     """Render changelog."""
     from dateutil import parser
 
-    for title, _ in assigned.items():
-        pr_group = [prs[i] for i in assigned[title]]
-        if pr_group:
-            print()
-            print(title)
-            print("~" * len(title))
-            print()
+    SECTION_ORDER = ["Enhancements", "Fixes", "Documentation", "Maintenance"]
+    for title in SECTION_ORDER:
+        if title in assigned:
+            pr_group = [prs[i] for i in assigned[title]]
+            if pr_group:
+                print()
+                print(title)
+                print("~" * len(title))
 
         # Group PRs by module labels
-        subsection_map = defaultdict(list)
-        for pr in pr_group:
-            labels = [label["name"] for label in pr["labels"]]
-            added = False
+        if title in ["Enhancements", "Fixes"]:
+            subsection_map = defaultdict(list)
+            for pr in pr_group:
+                labels = [label["name"] for label in pr["labels"]]
+                added = False
 
-            for label in labels:
-                # print("hello",label)
-                if label in LABEL_TO_SUBSECTION:
-                    #   print("hello")
-                    subsection_map[LABEL_TO_SUBSECTION[label]].append(pr)
-                    added = True
-            if not added:
-                subsection_map["Other"].append(pr)
+                for label in labels:
+                    # print("hello",label)
+                    if label in LABEL_TO_SUBSECTION:
+                        #   print("hello")
+                        subsection_map[LABEL_TO_SUBSECTION[label]].append(pr)
+                        added = True
+                if not added:
+                    subsection_map["Other"].append(pr)
 
-        # Render subsections
-        for subsection_title, pr_list in subsection_map.items():
-            if pr_list:
-                print(f"\n{subsection_title}")
-                print("^" * len(subsection_title), end="\n\n")
-                for pr in sorted(pr_list, key=lambda x: parser.parse(x["merged_at"])):
-                    render_row(pr)
+            # Render subsections
+            for subsection_title, pr_list in subsection_map.items():
+                if pr_list:
+                    print(f"\n{subsection_title}")
+                    print("^" * len(subsection_title))
+                    for pr in sorted(
+                        pr_list, key=lambda x: parser.parse(x["merged_at"])
+                    ):
+                        render_row(pr)
+        else:
+            for pr in sorted(pr_group, key=lambda x: parser.parse(pr["merged_at"])):
+                render_row(pr)
 
 
 if __name__ == "__main__":
